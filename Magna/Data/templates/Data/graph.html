@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load static %}
+{% block content %}
+    <div id="head" style="flex-direction: row; display: flex; align-items: stretch; justify-content: space-evenly;">
+        <button style="display: contents;"><img src="{% static 'magna_logo_blue.png' %}"></button>
+        <button onclick="open_index();" id="index" style="padding-left: 20px;padding-right: 20px;height: fit-content;align-self: center;">Index</button>
+        <form action="{% url 'search' %}" class="navbar-form navbar-left" method="get" style="width: 60%; display: flex; align-items: flex-end;">
+            <div class="input-group" style="width: 100%;">
+                <input id="search" name="search" type="text" class="form-control" placeholder="Search...">
+                <span class="input-group-btn" style="display: contents;">
+                    <button type="submit" class="btn btn-default">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                    </button>
+                </span>
+            </div>
+        </form>
+        {%  if user.is_authenticated %}
+            <button style="padding-left: 20px;padding-right: 20px;height: fit-content;align-self: center;">Profile</button>
+        {% else %}
+            <button style="padding-left: 20px;padding-right: 20px;height: fit-content;align-self: center;">Login</button>
+        {% endif %}
+    </div>
+    <div id="wrap">
+    <div id="sidebar">
+        <button onclick="close_explorer()" style="background: none; border: 0;"><h4 style="margin: 0;">Explorer &times;</h4></button>
+        <div style="height: inherit; overflow: auto;" id="side-menu">
+        <ul>
+            <li class="tree-item">
+                <a {% if research_object.title == Ancestor.title %} style="color: aquamarine;" {% endif %}>{{ Ancestor.title }}</a>
+                {% if Ancestor.children %}
+                    <ul>
+                        {% for parent in Ancestor.children.all %}
+                            <li class="tree-item">
+                                <div class="tree-line"></div>
+                                <a href="{% url 'detail' parent.id %}" {% if research_object.title == parent.title %} style="color: aquamarine;" {% endif %}>{{ parent.title }}</a>
+                                {% if parent.children %}
+                                    <ul>
+                                        {% for child in parent.children.all %}
+                                            <li class="tree-item">
+                                                <div class="tree-line"></div>
+                                                <a href="{% url 'detail' child.id %}" {% if research_object.title == child.title %} style="color: aquamarine;" {% endif %}>{{ child.title }}</a>
+                                                {% if child.children %}
+                                                    <ul>
+                                                        {% for chld in child.children.all %}
+                                                            <li class="tree-item">
+                                                                <div class="tree-line"></div>
+                                                                <a href="{% url 'detail' chld.id %}" {% if research_object.title == chld.title %} style="color: aquamarine;" {% endif %}>{{ chld.title }}</a>
+                                                                {% if chld.children %}
+                                                                    <ul>
+                                                                        {% for ch in chld.children.all %}
+                                                                            <li class="tree-item">
+                                                                                <div class="tree-line"></div>
+                                                                                <a href="{% url 'detail' ch.id %}" {% if research_object.title == ch.title %} style="color: aquamarine;" {% endif %}>{{ ch.title }}</a>
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        </ul>
+        </div>
+    </div>
+    {% if research_object.title != Ancestor.title %}
+    <div id="content">
+        <h1>{{ research_object.title }}</h1>
+        <p style="text-align: center;">{{ research_object.label }}</p>
+        <canvas id="barChart"></canvas>
+        <p style="font-size: smaller;">{{ research_object.source }}</p>
+        <hr>
+        <p style="text-align: center;"><u>Summary</u></p>
+        <p>{{ research_object.summary }}</p>
+        <hr>
+        <p style="text-align: center;">{{ research_object.label }}</p>
+        <div id="table-container" style="overflow: auto;" scrollable></div>
+        <p style="font-size: smaller;">{{ research_object.source }}</p>
+        <hr>
+    </div>
+    {% endif %}
+    </div>
+    <script>
+        var jsonData = {{ research_object.data|safe }};
+        
+        var data = jsonData.datasets;
+        var header = jsonData.header;
+        var cagr = jsonData.cagr
+        // Create the table dynamically
+        var table = document.createElement("table");
+    
+        // // Create the table header row
+        var headerRow = document.createElement("tr");
+        for (var i = 0; i < header.length; i++) {
+            var th = document.createElement("th");
+            th.textContent = header[i];
+            headerRow.appendChild(th);
+        }
+        table.appendChild(headerRow);
+    
+        // Create the table data rows
+        var ind = 0;
+        for (var component of data) {
+            var componentValues = component.data;
+            var cagr_value = (cagr[ind]).toFixed(1);
+            ind = ind + 1;
+            var dataRow = document.createElement("tr");
+            var componentCell = document.createElement("td");
+            componentCell.textContent = component.label;
+            dataRow.appendChild(componentCell);
+            for (comp of componentValues) {
+                var valueCell = document.createElement("td");
+                valueCell.textContent = comp.toFixed(1);
+                dataRow.appendChild(valueCell);
+            }
+    
+            var cagrCell = document.createElement("td");
+            cagrCell.textContent =  cagr_value + "%";
+            dataRow.appendChild(cagrCell);
+    
+            table.appendChild(dataRow);
+        }
+    
+        // Append the table to the table container
+        var tableContainer = document.getElementById("table-container");
+        var rows = table.getElementsByTagName("tr");
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].style.border = "1px solid black";
+        }
+        tableContainer.appendChild(table);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script>
+        // Get the canvas element
+        var ctx = document.getElementById('barChart').getContext('2d');
+      
+        // Define the labels and datasets
+        var jsonData = {{ research_object.data|safe }};
+        var labels = jsonData.header;
+        labels = labels.slice(1,-1);
+        var datasets = jsonData.datasets.slice(0, -1);
+        var letters = '0123456789ABCDEF'.split('');
+        function getRandomColor() {
+            var color = '#';
+            for (var i = 0; i < 6; i++ ) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+      
+        // Create the datasets with the specified color palette
+        var chartDatasets = datasets.map(function(dataset, index) {
+          return {
+            label: dataset.label,
+            data: dataset.data,
+            backgroundColor: getRandomColor()
+          };
+        });
+      
+        // Configure the chart options
+        var options = {
+          responsive: true,
+          scales: {
+            x: {
+              stacked: false
+            },
+            y: {
+              stacked: false
+            }
+          },
+          plugins: {
+            datalabels: {
+            display: true,
+            }
+          }
+        };
+      
+        // Create the bar chart
+        var barChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: chartDatasets
+          },
+          options: options
+        });
+    </script>
+    <script>
+        var diff = document.getElementById("content").getBoundingClientRect().height;
+        document.getElementById("sidebar").style.height = diff + "px";
+        document.getElementById("content").style.top = "-" + diff + "px";
+        document.getElementById("wrap").style.height = diff + "px";
+        function close_explorer()
+        {
+            document.getElementById("sidebar").style.display = "none";
+            document.getElementById("content").style.top = "0";
+            document.getElementById("content").style.marginLeft = "0";
+            document.getElementById("index").innerHTML = "Explorer";
+            document.getElementById("index").onclick = open_explorer;
+        }
+        function open_explorer()
+        {
+            document.getElementById("sidebar").style.display = "block";
+            document.getElementById("content").style.marginLeft = "33.8vw";
+            document.getElementById("content").style.top = "-" + diff + "px";
+            document.getElementById("index").innerHTML = "Index";
+            document.getElementById("index").onclick = open_index;
+        }
+        function open_index()
+        {
+            window.location.href = {% url 'index' %};
+        }
+    </script>
+    
+{% endblock content %}

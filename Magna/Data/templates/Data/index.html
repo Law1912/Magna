@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% block content %}
+<div style="display: flex; align-items: center; flex-direction: column; text-align: center;">
+    {% if search_phrase %}
+        <h2>Page: {{ page_obj.number }}</h2> <h2>Search: {{ search_phrase }}</h2>
+    {% else %}
+        <h1>Index</h1>
+    {% endif %}
+    {% if page_obj %}
+    <section>
+        {% for data_obj in page_obj %}
+            <article>
+                <a href="{% url 'detail' data_obj.id %}">
+                    {{ data_obj.title }}
+                </a>
+            </article>
+        {% endfor %}
+    </section>
+    <br>
+    {% if search_phrase %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_obj.number > 1 %}
+                    <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                {% if page_obj.number <= 3 %}
+                    {% for i in page_obj.paginator.page_range|slice:":5" %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}" tabindex="-1">{{ i }}</a></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% elif page_obj.number > page_obj.paginator.num_pages|add:"-3" %}
+                    {% for i in page_obj.paginator.page_range|slice:"-5:" %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}" tabindex="-1">{{ i }}</a></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}" tabindex="-1">{{ i }}</a></li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {% if page_obj.number < page_obj.paginator.num_pages %}
+                    <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ page_obj.next_page_number }}">next</a></li>
+                    <li class="page-item"><a class="page-link" href="?search={{ search_phrase }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_obj.number > 1 %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                {% if page_obj.number <= 3 %}
+                    {% for i in page_obj.paginator.page_range|slice:":5" %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?page={{ i }}" tabindex="-1">{{ i }}</a></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% elif page_obj.number > page_obj.paginator.num_pages|add:"-3" %}
+                    {% for i in page_obj.paginator.page_range|slice:"-5:" %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?page={{ i }}" tabindex="-1">{{ i }}</a></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item" disabled><a class="page-link" href="?page={{ i }}" style="z-index: -1;" tabindex="-1">{{ i }}</a></li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {% if page_obj.number < page_obj.paginator.num_pages %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+    {% else %}
+        <p>There is nothing here...</p>
+    {% endif %}
+</div>
+{% endblock %}
